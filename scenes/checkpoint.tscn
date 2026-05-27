@@ -1,0 +1,19 @@
+[gd_scene format=3 uid="uid://cpcojyrscy4l"]
+
+[ext_resource type="Script" uid="uid://c8qyyhl8bucjl" path="res://scripts/checkpoint.gd" id="1_ywqth"]
+[ext_resource type="Texture2D" uid="uid://dp6ay0rvn7w5x" path="res://assets/2D Pixel Dungeon Asset Pack/items and trap_animation/torch/torch_1.png" id="1_yyywg"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_ywqth"]
+radius = 50.0
+
+[node name="Checkpoint" type="Area2D" unique_id=1252391490]
+collision_layer = 32
+collision_mask = 3
+script = ExtResource("1_ywqth")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=495627036]
+shape = SubResource("CircleShape2D_ywqth")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1940069953]
+scale = Vector2(3, 3)
+texture = ExtResource("1_yyywg")

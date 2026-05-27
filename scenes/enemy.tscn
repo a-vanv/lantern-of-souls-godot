@@ -1,0 +1,32 @@
+[gd_scene format=3 uid="uid://by4g2awn6ni5m"]
+
+[ext_resource type="Texture2D" uid="uid://bw0to7fjf7n42" path="res://assets/enemy.png" id="1_7p1mj"]
+[ext_resource type="Script" uid="uid://17eck34hm611" path="res://scripts/enemy.gd" id="1_md0e3"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_md0e3"]
+size = Vector2(32, 32)
+
+[sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_md0e3"]
+points = PackedVector2Array(0, 0, 150, -60, 150, 60)
+
+[node name="Enemy" type="CharacterBody2D" unique_id=1810908752]
+collision_layer = 8
+collision_mask = 3
+script = ExtResource("1_md0e3")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=156371514]
+texture = ExtResource("1_7p1mj")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1563449831]
+shape = SubResource("RectangleShape2D_md0e3")
+
+[node name="VisionCone" type="Area2D" parent="." unique_id=1137299994]
+collision_layer = 16
+collision_mask = 6
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="VisionCone" unique_id=1087832411]
+shape = SubResource("ConvexPolygonShape2D_md0e3")
+
+[node name="Polygon2D" type="Polygon2D" parent="VisionCone" unique_id=830866604]
+color = Color(1, 0.2, 0.2, 0.25)
+polygon = PackedVector2Array(0, 0, 150, -60, 150, 60)

@@ -1,0 +1,52 @@
+[gd_scene format=3 uid="uid://tvu0jg3dlf27"]
+
+[ext_resource type="Texture2D" uid="uid://b8j7knjkgjrf4" path="res://assets/player.png" id="1_3vyb7"]
+[ext_resource type="Script" uid="uid://bpu5a2axxf0kh" path="res://scripts/player.gd" id="1_g2els"]
+[ext_resource type="Script" uid="uid://cfw3rsm4wnql6" path="res://scripts/light_visual.gd" id="3_qhqgy"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_3vyb7"]
+size = Vector2(32, 32)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_dqkch"]
+radius = 80.0
+
+[node name="Player" type="CharacterBody2D" unique_id=406450677 groups=["player"]]
+collision_layer = 2
+collision_mask = 9
+script = ExtResource("1_g2els")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=172898033]
+texture = ExtResource("1_3vyb7")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=687209104]
+shape = SubResource("RectangleShape2D_3vyb7")
+
+[node name="LightRadius" type="Area2D" parent="." unique_id=920202217 groups=["player_light"]]
+collision_layer = 4
+collision_mask = 16
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="LightRadius" unique_id=326805446]
+shape = SubResource("CircleShape2D_dqkch")
+
+[node name="LightVisual" type="Node2D" parent="LightRadius" unique_id=2102318061]
+script = ExtResource("3_qhqgy")
+
+[node name="HUD" type="CanvasLayer" parent="." unique_id=602329632]
+
+[node name="MarginContainer" type="MarginContainer" parent="HUD" unique_id=1430184923]
+anchors_preset = 10
+anchor_right = 1.0
+grow_horizontal = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HUD/MarginContainer" unique_id=2027777267]
+layout_mode = 2
+
+[node name="🕯 Soul" type="Label" parent="HUD/MarginContainer/VBoxContainer" unique_id=1203677192]
+layout_mode = 2
+
+[node name="SoulBar" type="ProgressBar" parent="HUD/MarginContainer/VBoxContainer" unique_id=203159316]
+layout_mode = 2

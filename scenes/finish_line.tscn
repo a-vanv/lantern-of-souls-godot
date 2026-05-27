@@ -1,0 +1,51 @@
+[gd_scene format=3 uid="uid://tjowxy15ljit"]
+
+[ext_resource type="Script" uid="uid://dnakwa6w5iru4" path="res://scripts/finish_line.gd" id="1_ojfi3"]
+[ext_resource type="Texture2D" uid="uid://cym1ryv3d130v" path="res://assets/2D Pixel Dungeon Asset Pack/items and trap_animation/chest/chest_4.png" id="2_05ejo"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_05ejo"]
+size = Vector2(80, 80)
+
+[node name="FinishLine" type="Area2D" unique_id=154216021]
+collision_layer = 32
+collision_mask = 2
+script = ExtResource("1_ojfi3")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1876400883]
+shape = SubResource("RectangleShape2D_05ejo")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=784974238]
+scale = Vector2(4, 4)
+texture = ExtResource("2_05ejo")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1043466863]
+process_mode = 3
+
+[node name="WinPanel" type="Panel" parent="CanvasLayer" unique_id=1599696296]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -148.0
+offset_top = -71.0
+offset_right = 152.0
+offset_bottom = 79.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/WinPanel" unique_id=586161024]
+layout_mode = 0
+offset_right = 297.0
+offset_bottom = 151.0
+alignment = 1
+
+[node name="Label" type="Label" parent="CanvasLayer/WinPanel/VBoxContainer" unique_id=60687815]
+layout_mode = 2
+text = "You Win!"
+horizontal_alignment = 1
+
+[node name="ContinueButton" type="Button" parent="CanvasLayer/WinPanel/VBoxContainer" unique_id=1322620462]
+layout_mode = 2
+action_mode = 0
+text = "Start Over"
