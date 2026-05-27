@@ -1,9 +1,18 @@
 extends CharacterBody2D
 
+var _player_light: Area2D = null
 
 func _ready():
 	$VisionCone.body_entered.connect(_on_vision_cone_body_entered)
-	$VisionCone.area_entered.connect(_on_vision_cone_area_entered)
+
+func _physics_process(_delta):
+	# Poll overlapping areas every frame — catches radius-resize overlaps
+	for area in $VisionCone.get_overlapping_areas():
+		if area.is_in_group("player_light"):
+			var player = area.get_parent()
+			if _has_line_of_sight(player.global_position):
+				player.die()
+				return
 
 func _has_line_of_sight(target_position: Vector2) -> bool:
 	var space_state = get_world_2d().direct_space_state
@@ -19,13 +28,6 @@ func _on_vision_cone_body_entered(body):
 	if body.is_in_group("player"):
 		if _has_line_of_sight(body.global_position):
 			body.die()
-
-func _on_vision_cone_area_entered(area):
-	if area.is_in_group("player_light"):
-		# The light is an Area2D, so navigate up to the player body for the ray target
-		var player = area.get_parent()
-		if _has_line_of_sight(player.global_position):
-			player.die()
 
 func _reset_game():
 	get_tree().call_deferred("reload_current_scene")
