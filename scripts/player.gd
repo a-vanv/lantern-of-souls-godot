@@ -8,6 +8,7 @@ extends CharacterBody2D
 @export_group("Feature Toggles")
 @export var scroll_wheel_speed_enabled: bool = false
 @export var adjustable_radius_enabled: bool = true
+@export var walk_run_mode_enabled: bool = false
 
 # --- Speed Settings ---
 @export_group("Speed Settings")
@@ -28,25 +29,45 @@ extends CharacterBody2D
 @export var min_drain_rate: float = 2.0
 @export var max_drain_rate: float = 8.0
 
+@export_group("Crouch, Walk, Run Settings")
+@export var walk_speed: float = 175.0
+@export var walk_radius: float = 70.0
+@export var sprint_speed: float = 350.0
+@export var sprint_radius: float = 100.0
+@export var min_crouch_radius: float = 20.0
+@export var max_crouch_radius: float = 60.0
+@export var min_crouch_scroll_speed: float = 50.0
+@export var max_crouch_scroll_speed: float = 125.0
+
 # Internal runtime speed (don't edit directly)
 var _current_speed: float
 var _spawn_position: Vector2
+var _crouch_scroll_speed: float
 
 func _ready() -> void:
 	_current_speed = default_speed
+	_crouch_scroll_speed = min_crouch_scroll_speed
 	_spawn_position = global_position
 	soul_bar.min_value = 0.0
 	soul_bar.max_value = 100.0
 	soul_bar.value = 100.0
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not scroll_wheel_speed_enabled:
+	if not scroll_wheel_speed_enabled and not walk_run_mode_enabled:
 		return
 	if event is InputEventMouseButton and event.pressed:
-		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			default_speed = clamp(default_speed + scroll_step, min_scroll_speed, max_scroll_speed)
-		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			default_speed = clamp(default_speed - scroll_step, min_scroll_speed, max_scroll_speed)
+		var scrolling_up = event.button_index == MOUSE_BUTTON_WHEEL_UP
+		var scrolling_down = event.button_index == MOUSE_BUTTON_WHEEL_DOWN
+		if walk_run_mode_enabled and Input.is_action_pressed("sprint"):
+			if scrolling_up:
+				_crouch_scroll_speed = clamp(_crouch_scroll_speed + scroll_step, min_crouch_scroll_speed, max_crouch_scroll_speed)
+			elif scrolling_down:
+				_crouch_scroll_speed = clamp(_crouch_scroll_speed - scroll_step, min_crouch_scroll_speed, max_crouch_scroll_speed)
+		else:
+			if scrolling_up:
+				default_speed = clamp(default_speed + scroll_step, min_scroll_speed, max_scroll_speed)
+			elif scrolling_down:
+				default_speed = clamp(default_speed - scroll_step, min_scroll_speed, max_scroll_speed)
 
 func read_input() -> void:
 	var input_direction = Vector2.ZERO
@@ -63,6 +84,22 @@ func read_input() -> void:
 			var scaled = remap(default_speed, min_scroll_speed, max_scroll_speed, crouch_radius, max_radius)
 			light_shape.radius = scaled
 			light_visual.set_radius(scaled)
+
+	elif walk_run_mode_enabled:
+		if Input.is_action_pressed("sprint"):
+			_current_speed = _crouch_scroll_speed
+			var scaled = remap(_crouch_scroll_speed, min_crouch_scroll_speed, max_crouch_scroll_speed, min_crouch_radius, max_crouch_radius)
+			light_shape.radius = scaled
+			light_visual.set_radius(scaled)
+		elif Input.is_action_pressed("crouch"):
+			light_shape.radius = sprint_radius
+			light_visual.set_radius(sprint_radius)
+			_current_speed = sprint_speed
+		else:
+			light_shape.radius = walk_radius
+			light_visual.set_radius(walk_radius)
+			_current_speed = walk_speed
+
 	else:
 		if Input.is_action_pressed("crouch"):
 			if adjustable_radius_enabled:
@@ -85,8 +122,12 @@ func _physics_process(delta: float) -> void:
 # --- Soul Logic ---
 
 func _update_soul(delta: float) -> void:
-	var drain = remap(light_shape.radius, crouch_radius, max_radius, min_drain_rate, max_drain_rate)
-	soul_bar.value -= drain * delta
+	if walk_run_mode_enabled:
+		var drain = remap(light_shape.radius, min_crouch_radius, sprint_radius, min_drain_rate, max_drain_rate)
+		soul_bar.value -= drain * delta
+	else:
+		var drain = remap(light_shape.radius, crouch_radius, max_radius, min_drain_rate, max_drain_rate)
+		soul_bar.value -= drain * delta
 
 	if soul_bar.value <= 0.0:
 		die()

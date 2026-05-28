@@ -2,7 +2,7 @@ extends PathFollow2D
 
 @export var patrol_speed: float = 80.0  # pixels per second
 @export var is_looping: bool = false
-@export var pause_duration: float = 0.5
+@export var pause_duration: float = 0.8
 
 var going_forward: bool = true
 var _path_length: float = 0.0

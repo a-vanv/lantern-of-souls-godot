@@ -147,8 +147,7 @@ tile_map_data = PackedByteArray("AAD+/wAAAAAIAAEAAAD//wAAAAAIAAEAAAAAAAAAAAAIAAE
 tile_set = SubResource("TileSet_sugp2")
 
 [node name="Player" parent="." unique_id=406450677 instance=ExtResource("2_0wfyh")]
-scroll_wheel_speed_enabled = true
-crouch_radius = 20.0
+walk_run_mode_enabled = true
 min_drain_rate = 0.5
 max_drain_rate = 4.0
 

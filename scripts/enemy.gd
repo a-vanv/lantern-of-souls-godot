@@ -1,7 +1,5 @@
 extends CharacterBody2D
 
-var _player_light: Area2D = null
-
 func _ready():
 	$VisionCone.body_entered.connect(_on_vision_cone_body_entered)
 
