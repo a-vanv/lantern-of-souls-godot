@@ -1,5 +1,9 @@
 extends CharacterBody2D
 
+@export_group("Spinning Settings")
+@export var spinning_enabled: bool = false
+@export var rotation_speed: float = PI
+
 func _ready():
 	$VisionCone.body_entered.connect(_on_vision_cone_body_entered)
 
@@ -11,6 +15,10 @@ func _physics_process(_delta):
 			if _has_line_of_sight(player.global_position):
 				player.die()
 				return
+
+func _process(delta: float) -> void:
+	if spinning_enabled:
+		rotate(rotation_speed * delta)
 
 func _has_line_of_sight(target_position: Vector2) -> bool:
 	var space_state = get_world_2d().direct_space_state

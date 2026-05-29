@@ -29,6 +29,7 @@ extends CharacterBody2D
 @export var min_drain_rate: float = 2.0
 @export var max_drain_rate: float = 8.0
 
+# --- Crouch, Walk, Run Settings ---
 @export_group("Crouch, Walk, Run Settings")
 @export var walk_speed: float = 175.0
 @export var walk_radius: float = 70.0
