@@ -9,6 +9,7 @@ extends CharacterBody2D
 @export var scroll_wheel_speed_enabled: bool = false
 @export var adjustable_radius_enabled: bool = true
 @export var walk_run_mode_enabled: bool = false
+@export var still_light_enabled: bool = false
 
 # --- Speed Settings ---
 @export_group("Speed Settings")
@@ -115,6 +116,9 @@ func read_input() -> void:
 
 	velocity = input_direction.normalized() * _current_speed
 
+	if still_light_enabled and input_direction == Vector2.ZERO:
+		_apply_still_radius()
+
 func _physics_process(delta: float) -> void:
 	read_input()
 	move_and_slide()
@@ -132,6 +136,10 @@ func _update_soul(delta: float) -> void:
 
 	if soul_bar.value <= 0.0:
 		die()
+
+func _apply_still_radius() -> void:
+	light_shape.radius = crouch_radius
+	light_visual.set_radius(crouch_radius)
 
 func die() -> void:
 	global_position = _spawn_position

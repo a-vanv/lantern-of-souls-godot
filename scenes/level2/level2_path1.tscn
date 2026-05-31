@@ -5,7 +5,7 @@
 
 [sub_resource type="Curve2D" id="Curve2D_lu84s"]
 _data = {
-"points": PackedVector2Array(0, 0, 0, 0, -235, -514, 0, 0, 0, 0, 120, -514, 0, 0, 0, 0, 119, 34, 0, 0, 0, 0, -235, 33, 0, 0, 0, 0, -235, -514)
+"points": PackedVector2Array(0, 0, 0, 0, -60, -515, 0, 0, 0, 0, 120, -514, 0, 0, 0, 0, 119, 34, 0, 0, 0, 0, -58, 35, 0, 0, 0, 0, -60, -515)
 }
 point_count = 5
 
@@ -13,7 +13,8 @@ point_count = 5
 curve = SubResource("Curve2D_lu84s")
 
 [node name="PathFollow2D" type="PathFollow2D" parent="." unique_id=2052052080]
-position = Vector2(-235, -514)
+position = Vector2(-60, -515)
+rotation = 0.0055554984
 script = ExtResource("1_43jik")
 is_looping = true
 
