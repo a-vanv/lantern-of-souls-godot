@@ -14,7 +14,7 @@ extends CharacterBody2D
 # --- Speed Settings ---
 @export_group("Speed Settings")
 @export var default_speed: float = 200.0
-@export var crouch_speed: float = 100.0
+@export var crouch_speed: float = 80.0
 @export var scroll_step: float = 20.0
 @export var min_scroll_speed: float = 50.0
 @export var max_scroll_speed: float = 400.0
@@ -22,7 +22,8 @@ extends CharacterBody2D
 # --- Soul Radius Settings ---
 @export_group("Soul Radius Settings")
 @export var normal_radius: float = 80.0
-@export var crouch_radius: float = 35.0
+@export var crouch_radius: float = 20.0
+@export var standing_still_radius: float = 10.0
 @export var max_radius: float = 120.0
 
 # --- Soul Settings ---
@@ -128,18 +129,18 @@ func _physics_process(delta: float) -> void:
 
 func _update_soul(delta: float) -> void:
 	if walk_run_mode_enabled:
-		var drain = remap(light_shape.radius, min_crouch_radius, sprint_radius, min_drain_rate, max_drain_rate)
+		var drain = remap(light_shape.radius, standing_still_radius, sprint_radius, min_drain_rate, max_drain_rate)
 		soul_bar.value -= drain * delta
 	else:
-		var drain = remap(light_shape.radius, crouch_radius, max_radius, min_drain_rate, max_drain_rate)
+		var drain = remap(light_shape.radius, standing_still_radius, max_radius, min_drain_rate, max_drain_rate)
 		soul_bar.value -= drain * delta
 
 	if soul_bar.value <= 0.0:
 		die()
 
 func _apply_still_radius() -> void:
-	light_shape.radius = crouch_radius
-	light_visual.set_radius(crouch_radius)
+	light_shape.radius = standing_still_radius
+	light_visual.set_radius(standing_still_radius)
 
 func die() -> void:
 	global_position = _spawn_position

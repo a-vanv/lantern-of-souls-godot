@@ -154,8 +154,8 @@ tile_map_data = PackedByteArray("AADd//r/AAAIAAcAAADd//v/AAAIAAcAAADd//z/AAAIAAc
 tile_set = SubResource("TileSet_sugp2")
 
 [node name="Player" parent="." unique_id=406450677 instance=ExtResource("2_0wfyh")]
-scroll_wheel_speed_enabled = true
-crouch_radius = 20.0
+still_light_enabled = true
+crouch_radius = 30.0
 min_drain_rate = 0.5
 max_drain_rate = 4.0
 
@@ -199,13 +199,13 @@ position = Vector2(4554, -2506)
 [node name="TestLevel2_SpinningEnemy1" parent="Level2" unique_id=1810908752 instance=ExtResource("9_85g3d")]
 position = Vector2(0, -550)
 spinning_enabled = true
-rotation_speed = 2.0
+rotation_speed = 1.8
 
 [node name="TestLevel2_SpinningEnemy2" parent="Level2" unique_id=47609668 instance=ExtResource("9_85g3d")]
 position = Vector2(0, -550)
 rotation = 3.1415927
 spinning_enabled = true
-rotation_speed = 2.0
+rotation_speed = 1.8
 
 [node name="TestLevel2_Checkpoint1" parent="Level2" unique_id=2107815858 instance=ExtResource("6_tefeu")]
 position = Vector2(0, -902)
