@@ -25,11 +25,12 @@ extends CharacterBody2D
 @export var crouch_radius: float = 20.0
 @export var standing_still_radius: float = 10.0
 @export var max_radius: float = 120.0
+@export var radius_lerp_speed: float = 8.0
 
 # --- Soul Settings ---
 @export_group("Soul Drain Settings")
-@export var min_drain_rate: float = 2.0
-@export var max_drain_rate: float = 8.0
+@export var min_drain_rate: float = 0.5
+@export var max_drain_rate: float = 4.5
 
 # --- Crouch, Walk, Run Settings ---
 @export_group("Crouch, Walk, Run Settings")
@@ -46,6 +47,7 @@ extends CharacterBody2D
 var _current_speed: float
 var _spawn_position: Vector2
 var _crouch_scroll_speed: float
+var _target_radius: float
 
 func _ready() -> void:
 	_current_speed = default_speed
@@ -54,6 +56,7 @@ func _ready() -> void:
 	soul_bar.min_value = 0.0
 	soul_bar.max_value = 100.0
 	soul_bar.value = 100.0
+	_target_radius = normal_radius
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not scroll_wheel_speed_enabled and not walk_run_mode_enabled:
@@ -85,34 +88,28 @@ func read_input() -> void:
 
 		if adjustable_radius_enabled:
 			var scaled = remap(default_speed, min_scroll_speed, max_scroll_speed, crouch_radius, max_radius)
-			light_shape.radius = scaled
-			light_visual.set_radius(scaled)
+			_set_target_radius(scaled)
 
 	elif walk_run_mode_enabled:
 		if Input.is_action_pressed("sprint"):
 			_current_speed = _crouch_scroll_speed
 			var scaled = remap(_crouch_scroll_speed, min_crouch_scroll_speed, max_crouch_scroll_speed, min_crouch_radius, max_crouch_radius)
-			light_shape.radius = scaled
-			light_visual.set_radius(scaled)
+			_set_target_radius(scaled)
 		elif Input.is_action_pressed("crouch"):
-			light_shape.radius = sprint_radius
-			light_visual.set_radius(sprint_radius)
+			_set_target_radius(sprint_radius)
 			_current_speed = sprint_speed
 		else:
-			light_shape.radius = walk_radius
-			light_visual.set_radius(walk_radius)
+			_set_target_radius(walk_radius)
 			_current_speed = walk_speed
 
 	else:
 		if Input.is_action_pressed("crouch"):
 			if adjustable_radius_enabled:
-				light_shape.radius = crouch_radius
-				light_visual.set_radius(crouch_radius)
+				_set_target_radius(crouch_radius)
 			_current_speed = crouch_speed
 		else:
 			if adjustable_radius_enabled:
-				light_shape.radius = normal_radius
-				light_visual.set_radius(normal_radius)
+				_set_target_radius(normal_radius)
 			_current_speed = default_speed
 
 	velocity = input_direction.normalized() * _current_speed
@@ -122,6 +119,11 @@ func read_input() -> void:
 
 func _physics_process(delta: float) -> void:
 	read_input()
+	var new_radius: float = lerp(light_shape.radius, _target_radius, radius_lerp_speed * delta) \
+		if abs(_target_radius - light_shape.radius) > scroll_step \
+		else _target_radius
+	light_shape.radius = new_radius
+	light_visual.set_radius(new_radius)
 	move_and_slide()
 	_update_soul(delta)
 	
@@ -138,9 +140,11 @@ func _update_soul(delta: float) -> void:
 	if soul_bar.value <= 0.0:
 		die()
 
+func _set_target_radius(r: float) -> void:
+	_target_radius = r
+
 func _apply_still_radius() -> void:
-	light_shape.radius = standing_still_radius
-	light_visual.set_radius(standing_still_radius)
+	_set_target_radius(standing_still_radius)
 
 func die() -> void:
 	global_position = _spawn_position

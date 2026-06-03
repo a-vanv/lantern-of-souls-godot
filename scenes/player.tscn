@@ -14,6 +14,8 @@ radius = 80.0
 collision_layer = 2
 collision_mask = 9
 script = ExtResource("1_g2els")
+scroll_wheel_speed_enabled = true
+still_light_enabled = true
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=172898033]
 texture = ExtResource("1_3vyb7")
