@@ -16,6 +16,10 @@ extends CharacterBody2D
 ##
 ##  For pathfinding: add a NavigationRegion2D to your level scene.
 ##  Without one the Hunter still works, moving in straight lines.
+##
+##  NavigationAgent2D inspector settings:
+##    Path Desired Distance   → 16.0   (was 4.0)
+##    Path Postprocessing     → Corridorfunnel   (was Edgecentered)
 ## ═══════════════════════════════════════════════════════════════
 
 enum State { SCAN, APPROACH, SEARCH }
@@ -41,7 +45,7 @@ enum State { SCAN, APPROACH, SEARCH }
 ## Seconds between radar pulses
 @export var scan_interval: float = 6.0
 ## World-unit radius that the radar can detect player_light areas
-@export var scan_radius: float = 500.0
+@export var scan_radius: float = 1500.0
 ## If enabled, walls will also block the radar (more forgiving for the player)
 @export var scan_needs_los: bool = false
 
@@ -52,7 +56,7 @@ enum State { SCAN, APPROACH, SEARCH }
 ## Rotation speed while sweeping (rad/s)
 @export var search_sweep_speed: float = 1.4
 ## Total arc covered by the sweep in degrees — split ±half from arrival angle
-@export var search_sweep_degrees: float = 130.0
+@export var search_sweep_degrees: float = 360.0
 
 # ── Visuals ───────────────────────────────────────────────────
 @export_group("Visuals")
@@ -74,18 +78,23 @@ enum State { SCAN, APPROACH, SEARCH }
 @export var cone_search_color: Color = Color(1.00, 0.85, 0.00, 0.55)
 
 # ── Private ───────────────────────────────────────────────────
-var _state:           State   = State.SCAN
-var _last_known_pos:  Vector2 = Vector2.ZERO
+var _state:             State   = State.SCAN
+var _last_known_pos:    Vector2 = Vector2.ZERO
 
-var _scan_timer:      float = 0.0
-var _search_timer:    float = 0.0
-var _search_base_rot: float = 0.0
-var _search_offset:   float = 0.0
-var _search_dir:      float = 1.0
-var _patrol_index:    int   = 0
+var _scan_timer:        float   = 0.0
+var _search_timer:      float   = 0.0
+var _search_base_rot:   float   = 0.0
+var _search_offset:     float   = 0.0
+var _search_dir:        float   = 1.0
+var _patrol_index:      int     = 0
+
+## Caches the last valid direction from the nav agent so the Hunter doesn't
+## snap toward the player (through walls) during waypoint transitions
+var _last_approach_dir: Vector2 = Vector2.RIGHT
 
 ## NavigationAgent2D must be a child node in the scene editor.
-## Set its Path Desired Distance to 4 and Target Desired Distance to 16.
+## Set its Path Desired Distance to 16 and Target Desired Distance to 16.
+## Set Path Postprocessing to Corridorfunnel.
 @onready var _nav: NavigationAgent2D = $NavigationAgent2D
 var _afterimage:  Node2D
 var _vision_poly: Polygon2D
@@ -124,9 +133,10 @@ func _physics_process(delta: float) -> void:
 		State.APPROACH: _tick_approach(delta)
 		State.SEARCH:   _tick_search(delta)
 
-	# Pin after-image to its world-space position and animate its alpha
+	# Pin after-image to its world-space position and rotation, then animate alpha
 	if _afterimage != null and _afterimage.visible:
 		_afterimage.global_position = _last_known_pos
+		_afterimage.global_rotation = 0.0
 		_pulse_afterimage()
 
 	move_and_slide()
@@ -150,11 +160,9 @@ func _tick_scan(delta: float) -> void:
 
 
 func _tick_approach(delta: float) -> void:
-	# Re-scan while en route so the target position stays fresh
-	_scan_timer -= delta
-	if _scan_timer <= 0.0:
-		_scan_timer = scan_interval
-		_refresh_last_known()
+	# NOTE: _refresh_last_known() is intentionally NOT called here.
+	# The Hunter commits to the position it saw during the radar scan and
+	# walks there. It will not update the target until the next scan cycle.
 
 	var to_target := _last_known_pos - global_position
 	if to_target.length() < 20.0:
@@ -162,17 +170,22 @@ func _tick_approach(delta: float) -> void:
 		_enter_search()
 		return
 
-	# Ask the nav agent for the next waypoint. When no NavigationRegion2D
-	# exists, get_next_path_position() returns the agent's own position, making
-	# to_next a near-zero vector. Detecting that lets us fall back to a straight
-	# line so the Hunter moves regardless of whether a nav mesh is present.
-	_nav.target_position = _last_known_pos
+	# NOTE: target_position is set once in _enter_approach, not every frame,
+	# so the Hunter follows the originally computed path without interruption.
 	var next    := _nav.get_next_path_position()
 	var to_next := next - global_position
-	var dir     := to_next.normalized() if to_next.length() > 4.0 else to_target.normalized()
+
+	var dir: Vector2
+	if to_next.length() > 4.0:
+		dir = to_next.normalized()
+		_last_approach_dir = dir	# cache every valid nav direction
+	else:
+		# Waypoint transition gap — hold the last known good direction
+		# instead of snapping toward to_target (which points through walls)
+		dir = _last_approach_dir
 
 	rotation = lerp_angle(rotation, dir.angle(), rotation_speed * delta)
-	velocity = dir * approach_speed
+	velocity  = dir * approach_speed
 
 
 func _tick_search(delta: float) -> void:
@@ -213,7 +226,9 @@ func _fire_radar() -> void:
 
 
 func _refresh_last_known() -> void:
-	## Called while approaching to nudge the target if the player has moved
+	## Available if needed — updates last known pos while the light is still
+	## visible. Not called during APPROACH by design: the Hunter commits to
+	## the scanned position and does not track the player mid-approach.
 	for light in get_tree().get_nodes_in_group("player_light"):
 		if not light is Node2D:
 			continue
@@ -230,8 +245,14 @@ func _refresh_last_known() -> void:
 # ═════════════════════════════════════════════════════
 
 func _enter_approach(pos: Vector2) -> void:
-	_last_known_pos = pos
-	_state          = State.APPROACH
+	_last_known_pos    = pos
+	_state             = State.APPROACH
+	# Seed direction cache toward the target so the first frame has a
+	# sensible direction before any nav data arrives
+	_last_approach_dir = (pos - global_position).normalized()
+	# CHANGED: path is requested here once, not updated every frame in
+	# _tick_approach — the Hunter walks to the scanned position and stops
+	_nav.target_position = pos
 	_set_cone_color(cone_alert_color)
 	if afterimage_enabled and _afterimage != null:
 		_afterimage.global_position = pos
@@ -336,8 +357,8 @@ func _build_afterimage() -> void:
 
 func _pulse_afterimage() -> void:
 	## Gently fades the circle alpha in and out so it reads as a "ghost"
-	var t    := Time.get_ticks_msec() * 0.005
-	var alpha := sin(t) * 0.5 + 0.5           # oscillates 0 → 1
+	var t     := Time.get_ticks_msec() * 0.005
+	var alpha := sin(t) * 0.5 + 0.5	# oscillates 0 → 1
 	var poly  := _afterimage.get_child(0) as Polygon2D
 	if poly:
 		var c  := afterimage_color
@@ -352,7 +373,7 @@ func _emit_scan_ring() -> void:
 	var pts      := PackedVector2Array()
 	for i in 32:
 		var a := (float(i) / 32.0) * TAU
-		pts.append(Vector2(cos(a), sin(a)) * 24.0)   # base size before scaling
+		pts.append(Vector2(cos(a), sin(a)) * 24.0)	# base size before scaling
 	ring.polygon = pts
 	ring.color   = pulse_color
 	add_child(ring)

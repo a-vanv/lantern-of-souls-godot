@@ -48,6 +48,9 @@ var _current_speed: float
 var _spawn_position: Vector2
 var _crouch_scroll_speed: float
 var _target_radius: float
+# --- NEW: crouch toggle state ---
+var _crouch_toggle_mode: bool = false
+var _crouch_toggled: bool = false
 
 func _ready() -> void:
 	_current_speed = default_speed
@@ -57,6 +60,7 @@ func _ready() -> void:
 	soul_bar.max_value = 100.0
 	soul_bar.value = 100.0
 	_target_radius = normal_radius
+	_setup_crouch_toggle_button() # --- NEW ---
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not scroll_wheel_speed_enabled and not walk_run_mode_enabled:
@@ -64,7 +68,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed:
 		var scrolling_up = event.button_index == MOUSE_BUTTON_WHEEL_UP
 		var scrolling_down = event.button_index == MOUSE_BUTTON_WHEEL_DOWN
-		if walk_run_mode_enabled and Input.is_action_pressed("sprint"):
+		var is_crouching = _crouch_toggled if _crouch_toggle_mode else Input.is_action_pressed("sprint")
+		if walk_run_mode_enabled and is_crouching:
 			if scrolling_up:
 				_crouch_scroll_speed = clamp(_crouch_scroll_speed + scroll_step, min_crouch_scroll_speed, max_crouch_scroll_speed)
 			elif scrolling_down:
@@ -91,7 +96,14 @@ func read_input() -> void:
 			_set_target_radius(scaled)
 
 	elif walk_run_mode_enabled:
-		if Input.is_action_pressed("sprint"):
+		if _crouch_toggle_mode and Input.is_action_just_pressed("sprint"):
+			_crouch_toggled = !_crouch_toggled
+		# Sprinting always cancels a locked crouch
+		if _crouch_toggle_mode and Input.is_action_pressed("crouch"):
+			_crouch_toggled = false
+		var is_crouching = _crouch_toggled if _crouch_toggle_mode else Input.is_action_pressed("sprint")
+
+		if is_crouching:
 			_current_speed = _crouch_scroll_speed
 			var scaled = remap(_crouch_scroll_speed, min_crouch_scroll_speed, max_crouch_scroll_speed, min_crouch_radius, max_crouch_radius)
 			_set_target_radius(scaled)
@@ -126,7 +138,7 @@ func _physics_process(delta: float) -> void:
 	light_visual.set_radius(new_radius)
 	move_and_slide()
 	_update_soul(delta)
-	
+
 # --- Soul Logic ---
 
 func _update_soul(delta: float) -> void:
@@ -157,3 +169,22 @@ func refill_soul() -> void:
 # Called by Checkpoint nodes to register a new respawn point.
 func set_spawn(pos: Vector2) -> void:
 	_spawn_position = pos
+
+# --- NEW: Crouch Toggle Button ---
+
+func _setup_crouch_toggle_button() -> void:
+	var btn = Button.new()
+	btn.name = "CrouchToggleBtn"
+	btn.text = "Crouch: Hold"
+	btn.visible = walk_run_mode_enabled  # only show in walk/run mode
+	btn.focus_mode = Control.FOCUS_NONE  # prevent button from stealing keypresses
+	btn.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	btn.offset_left = -140
+	btn.offset_top = -44
+	btn.pressed.connect(_on_crouch_toggle_pressed)
+	$HUD.add_child(btn)
+
+func _on_crouch_toggle_pressed() -> void:
+	_crouch_toggle_mode = !_crouch_toggle_mode
+	_crouch_toggled = false  # clear any locked crouch when switching modes
+	$HUD/CrouchToggleBtn.text = "Crouch: Toggle" if _crouch_toggle_mode else "Crouch: Hold"
