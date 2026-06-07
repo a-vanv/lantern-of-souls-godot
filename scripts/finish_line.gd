@@ -22,4 +22,8 @@ func _on_body_entered(body: Node) -> void:
 func _on_continue_pressed() -> void:
 	get_tree().paused = false
 
-	get_tree().reload_current_scene()
+	if next_scene != "res://scenes/main.tscn":
+		get_tree().change_scene_to_file(next_scene)
+
+	else:
+		get_tree().reload_current_scene()

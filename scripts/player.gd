@@ -48,9 +48,12 @@ var _current_speed: float
 var _spawn_position: Vector2
 var _crouch_scroll_speed: float
 var _target_radius: float
-# --- NEW: crouch toggle state ---
 var _crouch_toggle_mode: bool = false
 var _crouch_toggled: bool = false
+
+# --- Key System ---
+var has_key: bool = false
+var _key_icon: Label
 
 func _ready() -> void:
 	_current_speed = default_speed
@@ -60,7 +63,8 @@ func _ready() -> void:
 	soul_bar.max_value = 100.0
 	soul_bar.value = 100.0
 	_target_radius = normal_radius
-	_setup_crouch_toggle_button() # --- NEW ---
+	_setup_crouch_toggle_button()
+	_setup_key_icon()
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not scroll_wheel_speed_enabled and not walk_run_mode_enabled:
@@ -159,8 +163,12 @@ func _apply_still_radius() -> void:
 	_set_target_radius(standing_still_radius)
 
 func die() -> void:
+	has_key = false
+	_key_icon.visible = false
 	global_position = _spawn_position
 	soul_bar.value = soul_bar.max_value
+	for enemy in get_tree().get_nodes_in_group("enemy"):
+		enemy.respawn_key()
 
 # Called by Checkpoint nodes when the player steps on them.
 func refill_soul() -> void:
@@ -170,7 +178,28 @@ func refill_soul() -> void:
 func set_spawn(pos: Vector2) -> void:
 	_spawn_position = pos
 
-# --- NEW: Crouch Toggle Button ---
+# --- Key System ---
+
+func _setup_key_icon() -> void:
+	_key_icon = Label.new()
+	_key_icon.text = "🗝  KEY"
+	_key_icon.add_theme_font_size_override("font_size", 22)
+	_key_icon.add_theme_color_override("font_color", Color.GOLD)
+	_key_icon.visible = false
+	_key_icon.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	_key_icon.offset_left = -100
+	_key_icon.offset_top = -80
+	$HUD.add_child(_key_icon)
+
+func collect_key() -> void:
+	has_key = true
+	_key_icon.visible = true
+
+func use_key() -> void:
+	has_key = false
+	_key_icon.visible = false
+
+# --- Crouch Toggle Button ---
 
 func _setup_crouch_toggle_button() -> void:
 	var btn = Button.new()

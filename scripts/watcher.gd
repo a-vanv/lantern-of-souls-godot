@@ -44,6 +44,37 @@ extends Node2D
 @export var start_angle_degrees: float = 0.0
 
 
+# ── Waypoint Sweep ────────────────────────────────────────────────────────────
+
+@export_group("Waypoint Sweep")
+
+## Enable waypoint sweep mode. When on, the spotlight cycles between the
+## selected cardinal directions, pausing at each one instead of spinning
+## continuously. This overrides the Spinning group while active.
+@export var waypoint_mode_enabled: bool = false:
+	set(val):
+		waypoint_mode_enabled = val
+		if is_inside_tree() and not Engine.is_editor_hint():
+			_init_waypoint_state()
+
+## Which cardinal directions the spotlight will visit. Pick any combination.
+## They are cycled in clockwise screen order: Right → Down → Left → Up.
+## Select at least two for a meaningful sweep pattern.
+@export_flags("Right", "Down", "Left", "Up") var sweep_directions: int = 5:
+	set(val):
+		sweep_directions = val
+		if is_inside_tree() and not Engine.is_editor_hint():
+			_init_waypoint_state()
+
+## How long (in seconds) the spotlight lingers at each direction before turning.
+@export var pause_duration: float = 2.0
+
+## Controls how quickly the spotlight lerps between directions.
+## This is the lerp weight factor per second — higher values snap faster,
+## lower values glide more slowly. Values in the 3–6 range feel natural.
+@export var turn_speed: float = 4.0
+
+
 # ── Spotlight Shape ───────────────────────────────────────────────────────────
 
 @export_group("Spotlight Shape")
@@ -105,23 +136,39 @@ extends Node2D
 @export var detection_enabled: bool = true
 
 
+# ── Waypoint sweep runtime state ──────────────────────────────────────────────
+
+# Ordered list of target angles (radians) built from sweep_directions at runtime.
+var _waypoint_targets: Array = []
+# Index of the waypoint currently being targeted or dwelt at.
+var _waypoint_index: int = 0
+# True while dwelling at a waypoint; false while lerping toward the next one.
+var _is_pausing: bool = true
+# Counts down (seconds) during the pause phase.
+var _pause_timer: float = 0.0
+
+
 # ── Lifecycle ─────────────────────────────────────────────────────────────────
 
 func _ready() -> void:
 	$SpotlightPivot.rotation_degrees = start_angle_degrees
 	_rebuild()
 
-	# Only hook up detection signals at runtime, not in the editor.
+	# Only hook up detection signals and sweep state at runtime, not in editor.
 	if not Engine.is_editor_hint():
 		$SpotlightPivot/Spotlight.body_entered.connect(_on_spotlight_body_entered)
+		if waypoint_mode_enabled:
+			_init_waypoint_state()
 
 
 func _process(delta: float) -> void:
-	# Never spin in the editor — it makes placing the node difficult.
+	# Never move in the editor — it makes placing the node difficult.
 	if Engine.is_editor_hint():
 		return
 
-	if spinning_enabled:
+	if waypoint_mode_enabled:
+		_process_waypoint_sweep(delta)
+	elif spinning_enabled:
 		var dir := 1.0 if clockwise else -1.0
 		$SpotlightPivot.rotate(rotation_speed * delta * dir)
 
@@ -150,6 +197,83 @@ func _physics_process(_delta: float) -> void:
 			if _has_line_of_sight(player.global_position):
 				player.die()
 				return
+
+
+# ── Waypoint sweep ────────────────────────────────────────────────────────────
+
+## Initialises (or re-initialises) the waypoint sweep state.
+## Called on _ready and whenever waypoint_mode_enabled or sweep_directions
+## change at runtime.
+func _init_waypoint_state() -> void:
+	if not has_node("SpotlightPivot"):
+		return
+	_waypoint_targets = _build_waypoint_list()
+	if _waypoint_targets.is_empty():
+		return
+	# Begin at whichever waypoint is closest to the current pivot angle so
+	# enabling the mode mid-play doesn't cause a jarring long-distance snap.
+	_waypoint_index = _nearest_waypoint_index()
+	_is_pausing = true
+	_pause_timer = pause_duration
+
+
+## Returns an Array of angles in radians, one per enabled direction,
+## in clockwise screen order: Right (0) → Down (π/2) → Left (π) → Up (−π/2).
+func _build_waypoint_list() -> Array:
+	var targets: Array = []
+	if sweep_directions & 1:	# Right  →   0°
+		targets.append(0.0)
+	if sweep_directions & 2:	# Down   →  90°
+		targets.append(PI * 0.5)
+	if sweep_directions & 4:	# Left   → 180°
+		targets.append(PI)
+	if sweep_directions & 8:	# Up     → −90°
+		targets.append(-PI * 0.5)
+	return targets
+
+
+## Returns the index of the waypoint whose angle is closest (by angular
+## distance) to the SpotlightPivot's current rotation.
+func _nearest_waypoint_index() -> int:
+	var current: float = $SpotlightPivot.rotation
+	var best_idx: int = 0
+	var best_diff: float = INF
+	for i in range(_waypoint_targets.size()):
+		var diff: float = abs(angle_difference(current, _waypoint_targets[i]))
+		if diff < best_diff:
+			best_diff = diff
+			best_idx = i
+	return best_idx
+
+
+## Runs each frame when waypoint_mode_enabled is true.
+## Alternates between a lerp-toward-target phase and a timed pause phase.
+func _process_waypoint_sweep(delta: float) -> void:
+	if _waypoint_targets.is_empty():
+		return
+
+	if _is_pausing:
+		_pause_timer -= delta
+		if _pause_timer <= 0.0:
+			# Pause expired — start turning toward the next waypoint.
+			_is_pausing = false
+			_waypoint_index = (_waypoint_index + 1) % _waypoint_targets.size()
+	else:
+		var target: float = _waypoint_targets[_waypoint_index]
+		var current: float = $SpotlightPivot.rotation
+
+		# lerp_angle takes the shortest angular path between two angles.
+		# clamp keeps the weight in [0, 1] regardless of frame rate.
+		var new_rot: float = lerp_angle(current, target, clamp(turn_speed * delta, 0.0, 1.0))
+
+		# Snap and begin pausing once within a small threshold to prevent
+		# indefinite micro-oscillation as the lerp approaches the target.
+		if abs(angle_difference(new_rot, target)) < 0.005:
+			$SpotlightPivot.rotation = target
+			_is_pausing = true
+			_pause_timer = pause_duration
+		else:
+			$SpotlightPivot.rotation = new_rot
 
 
 # ── Rebuild ───────────────────────────────────────────────────────────────────
@@ -199,20 +323,31 @@ func _on_spotlight_body_entered(body: Node2D) -> void:
 			body.die()
 
 
-# CHANGED: ray now originates from the spotlight's world position rather than
-# the watcher root. This means a wall between the light pool and the player
-# correctly blocks detection, which is the physically intuitive behaviour.
+# FIX: ray now originates from the watcher's own position (global_position)
+# rather than the spotlight ellipse center.
 #
-# FIXED: query.exclude now uses the Spotlight Area2D's RID via .get_rid().
-# The watcher root is a plain Node2D with no physics RID, so passing [self]
-# as in enemy.gd would be a type error here.
+# The previous approach (casting from the spotlight center) caused false
+# positives with large spotlights: the ellipse center could have unobstructed
+# LOS to the player even though the player was only overlapping the far edge
+# of the ellipse — which was itself blocked by a wall. The ray from the center
+# simply didn't cross that wall.
+#
+# Casting from the watcher root is the physically correct model: the watcher
+# is the light source, so any wall between the watcher and the player blocks
+# detection regardless of how large the spotlight ellipse is.
+#
+# NOTE: the watcher scene root is a CharacterBody2D (visible in the Inspector
+# despite the script's `extends Node2D`), so get_rid() correctly returns its
+# physics body RID and must be excluded to prevent the ray from hitting itself.
 func _has_line_of_sight(target_position: Vector2) -> bool:
 	var space_state := get_world_2d().direct_space_state
-	var spotlight_pos: Vector2 = $SpotlightPivot/Spotlight.global_position
-	var query := PhysicsRayQueryParameters2D.create(spotlight_pos, target_position)
-	query.exclude = [$SpotlightPivot/Spotlight.get_rid()]
+	var query := PhysicsRayQueryParameters2D.create(global_position, target_position)
+	# Exclude the watcher's own CharacterBody2D so the ray doesn't self-intersect.
+	# Cast to CollisionObject2D (the ancestor that owns get_rid()) because this
+	# script extends Node2D and GDScript can't resolve get_rid() on that type
+	# directly, even though the actual scene root node is a CharacterBody2D.
 
 	var result := space_state.intersect_ray(query)
 
-	# If nothing was hit, or the hit collider isn't the player, a wall is in the way.
+	# If nothing was hit, or the first hit isn't the player, a wall is in the way.
 	return not result.is_empty() and result["collider"].is_in_group("player")

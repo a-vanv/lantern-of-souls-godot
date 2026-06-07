@@ -9,7 +9,7 @@ size = Vector2(32, 32)
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_md0e3"]
 points = PackedVector2Array(0, 0, 150, -60, 150, 60)
 
-[node name="Enemy" type="CharacterBody2D" unique_id=1810908752]
+[node name="Enemy" type="CharacterBody2D" unique_id=1810908752 groups=["enemy"]]
 collision_layer = 8
 collision_mask = 3
 script = ExtResource("1_md0e3")
