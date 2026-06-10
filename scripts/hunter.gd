@@ -77,6 +77,10 @@ enum State { SCAN, APPROACH, SEARCH }
 ## Vision cone tint while searching
 @export var cone_search_color: Color = Color(1.00, 0.85, 0.00, 0.55)
 
+# ── Key Settings ──────────────────────────────────────────────
+@export_group("Key Settings")
+@export var has_key: bool = false
+
 # ── Private ───────────────────────────────────────────────────
 var _state:             State   = State.SCAN
 var _last_known_pos:    Vector2 = Vector2.ZERO
@@ -98,6 +102,7 @@ var _last_approach_dir: Vector2 = Vector2.RIGHT
 @onready var _nav: NavigationAgent2D = $NavigationAgent2D
 var _afterimage:  Node2D
 var _vision_poly: Polygon2D
+@onready var _key_pickup: Area2D = $KeyPickup
 
 
 # ═════════════════════════════════════════════════════
@@ -119,6 +124,9 @@ func _ready() -> void:
 	# Stagger scan timers so multiple Hunters don't all pulse at once
 	_scan_timer = randf_range(0.0, scan_interval)
 
+	_key_pickup.visible = has_key
+	if has_key:
+		_key_pickup.body_entered.connect(_on_key_body_entered)
 
 # ═════════════════════════════════════════════════════
 # MAIN LOOP
@@ -138,6 +146,9 @@ func _physics_process(delta: float) -> void:
 		_afterimage.global_position = _last_known_pos
 		_afterimage.global_rotation = 0.0
 		_pulse_afterimage()
+		
+	if _key_pickup.visible:
+		_key_pickup.global_position = global_position + (-global_transform.x * 35.0)
 
 	move_and_slide()
 
@@ -317,6 +328,20 @@ func _advance_patrol(delta: float) -> void:
 	dir      = dir.normalized()
 	rotation = lerp_angle(rotation, dir.angle(), rotation_speed * delta)
 	velocity = dir * patrol_speed
+
+
+# ═════════════════════════════════════════════════════
+# KEY LOGIC
+# ═════════════════════════════════════════════════════
+
+func _on_key_body_entered(body: Node2D) -> void:
+	if body.is_in_group("player"):
+		body.collect_key()
+		_key_pickup.visible = false
+
+func respawn_key() -> void:
+	if has_key:
+		_key_pickup.visible = true
 
 
 # ═════════════════════════════════════════════════════

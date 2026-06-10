@@ -9,6 +9,11 @@ size = Vector2(32, 32)
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_md0e3"]
 points = PackedVector2Array(0, 0, 150, -60, 150, 60)
 
+[sub_resource type="CircleShape2D" id="CircleShape2D_md0e3"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_4ra3w"]
+font_size = 20
+
 [node name="Enemy" type="CharacterBody2D" unique_id=1810908752 groups=["enemy"]]
 collision_layer = 8
 collision_mask = 3
@@ -30,3 +35,18 @@ shape = SubResource("ConvexPolygonShape2D_md0e3")
 [node name="Polygon2D" type="Polygon2D" parent="VisionCone" unique_id=830866604]
 color = Color(1, 0.2, 0.2, 0.25)
 polygon = PackedVector2Array(0, 0, 150, -60, 150, 60)
+
+[node name="KeyPickup" type="Area2D" parent="." unique_id=585844913]
+collision_layer = 8
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="KeyPickup" unique_id=948849802]
+shape = SubResource("CircleShape2D_md0e3")
+
+[node name="Label" type="Label" parent="KeyPickup" unique_id=1445928300]
+offset_left = -13.0
+offset_top = -14.0
+offset_right = 27.0
+offset_bottom = 14.0
+text = "🗝"
+label_settings = SubResource("LabelSettings_4ra3w")

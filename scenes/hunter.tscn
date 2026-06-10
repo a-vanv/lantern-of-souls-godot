@@ -3,6 +3,11 @@
 [ext_resource type="Script" uid="uid://6wxet5erhn73" path="res://scripts/hunter.gd" id="1_kr1wx"]
 [ext_resource type="Texture2D" uid="uid://b77jv6kq68bpl" path="res://assets/hunter.png" id="2_kr1wx"]
 
+[sub_resource type="CircleShape2D" id="CircleShape2D_kr1wx"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_amnbx"]
+font_size = 20
+
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_md0e3"]
 size = Vector2(32, 32)
 
@@ -14,6 +19,22 @@ collision_layer = 8
 collision_mask = 3
 motion_mode = 1
 script = ExtResource("1_kr1wx")
+
+[node name="KeyPickup" type="Area2D" parent="." unique_id=1307887643]
+collision_layer = 8
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="KeyPickup" unique_id=653054464]
+shape = SubResource("CircleShape2D_kr1wx")
+
+[node name="Label" type="Label" parent="KeyPickup" unique_id=1681894801]
+offset_left = -13.0
+offset_top = -14.0
+offset_right = 27.0
+offset_bottom = 14.0
+text = "🗝"
+label_settings = SubResource("LabelSettings_amnbx")
+metadata/_edit_use_anchors_ = true
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=156371514]
 texture = ExtResource("2_kr1wx")

@@ -8,12 +8,13 @@ extends CharacterBody2D
 @export_group("Key Settings")
 @export var has_key: bool = false
 
-var _key_pickup: Area2D = null
+@onready var _key_pickup: Area2D = $KeyPickup
 
 func _ready() -> void:
 	$VisionCone.body_entered.connect(_on_vision_cone_body_entered)
+	_key_pickup.visible = has_key
 	if has_key:
-		_spawn_key()
+		_key_pickup.body_entered.connect(_on_key_body_entered)
 
 func _physics_process(_delta) -> void:
 	# Poll overlapping areas every frame — catches radius-resize overlaps
@@ -28,46 +29,19 @@ func _process(delta: float) -> void:
 	if spinning_enabled:
 		rotate(rotation_speed * delta)
 	# Key is a scene sibling (not a child) so it doesn't rotate with the enemy
-	if is_instance_valid(_key_pickup):
-		_key_pickup.global_position = global_position + (-transform.y * 35.0)
+	if _key_pickup.visible:
+		_key_pickup.global_position = global_position + (-global_transform.x * 35.0)
 
 # --- Key Logic ---
-
-func _spawn_key() -> void:
-	_key_pickup = Area2D.new()
-	_key_pickup.name = "KeyPickup"
-	_key_pickup.collision_mask = 0xFFFFFFFF  # catch player on any collision layer
-
-	var shape = CollisionShape2D.new()
-	var circle = CircleShape2D.new()
-	circle.radius = 14.0
-	shape.shape = circle
-	_key_pickup.add_child(shape)
-
-	var label = Label.new()
-	label.text = "🗝"
-	label.add_theme_font_size_override("font_size", 20)
-	label.position = Vector2(-10, -12)
-	_key_pickup.add_child(label)
-
-	_key_pickup.body_entered.connect(_on_key_body_entered)
-	# Deferred so the parent level scene is fully ready before we add to it
-	call_deferred("_add_key_to_parent")
-
-func _add_key_to_parent() -> void:
-	if is_instance_valid(_key_pickup):
-		get_parent().add_child(_key_pickup)
-		_key_pickup.global_position = global_position + (-transform.x * 36.0)
 
 func _on_key_body_entered(body: Node2D) -> void:
 	if body.is_in_group("player"):
 		body.collect_key()
-		_key_pickup.queue_free()
-		_key_pickup = null
+		_key_pickup.visible = false
 
 func respawn_key() -> void:
-	if has_key and not is_instance_valid(_key_pickup):
-		_spawn_key()
+	if has_key:
+		_key_pickup.visible = true
 
 # --- Sight ---
 

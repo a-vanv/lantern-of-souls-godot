@@ -1,0 +1,26 @@
+[gd_scene format=3 uid="uid://dpfd7l5lamby2"]
+
+[ext_resource type="Script" uid="uid://cf0q4g58cgc6i" path="res://scripts/door.gd" id="1_uvdjg"]
+[ext_resource type="Texture2D" uid="uid://yko8fbs5bfgd" path="res://assets/2D Pixel Dungeon Asset Pack/Door.png" id="2_83dcw"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_la1wf"]
+size = Vector2(34, 34)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_18pbm"]
+size = Vector2(44, 43)
+
+[node name="Door" type="StaticBody2D" unique_id=1937324583]
+script = ExtResource("1_uvdjg")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=86326757]
+shape = SubResource("RectangleShape2D_la1wf")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1576294008]
+texture = ExtResource("2_83dcw")
+
+[node name="DetectionArea" type="Area2D" parent="." unique_id=792249781]
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="DetectionArea" unique_id=2023774862]
+position = Vector2(0, -0.5)
+shape = SubResource("RectangleShape2D_18pbm")
