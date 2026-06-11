@@ -1,40 +1,33 @@
 [gd_scene format=3 uid="uid://owdabjcwjpbq"]
 
 [ext_resource type="Script" uid="uid://6wxet5erhn73" path="res://scripts/hunter.gd" id="1_kr1wx"]
+[ext_resource type="Texture2D" uid="uid://butk0862kcgyx" path="res://assets/2D Pixel Dungeon Asset Pack/items and trap_animation/keys/keys_1_1.png" id="2_amnbx"]
 [ext_resource type="Texture2D" uid="uid://b77jv6kq68bpl" path="res://assets/hunter.png" id="2_kr1wx"]
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_kr1wx"]
-
-[sub_resource type="LabelSettings" id="LabelSettings_amnbx"]
-font_size = 20
+[sub_resource type="CircleShape2D" id="CircleShape2D_h7gi6"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_md0e3"]
 size = Vector2(32, 32)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_md0e3"]
-points = PackedVector2Array(0, 0, 150, -60, 150, 60)
+points = PackedVector2Array(0, 0, 100, -40, 100, 40)
 
-[node name="Hunter" type="CharacterBody2D" unique_id=1810908752]
+[node name="Hunter" type="CharacterBody2D" unique_id=1810908752 groups=["enemy"]]
 collision_layer = 8
 collision_mask = 3
 motion_mode = 1
 script = ExtResource("1_kr1wx")
 
-[node name="KeyPickup" type="Area2D" parent="." unique_id=1307887643]
+[node name="KeyPickup" type="Area2D" parent="." unique_id=1543205211]
 collision_layer = 8
 collision_mask = 2
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="KeyPickup" unique_id=653054464]
-shape = SubResource("CircleShape2D_kr1wx")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="KeyPickup" unique_id=2040554343]
+shape = SubResource("CircleShape2D_h7gi6")
 
-[node name="Label" type="Label" parent="KeyPickup" unique_id=1681894801]
-offset_left = -13.0
-offset_top = -14.0
-offset_right = 27.0
-offset_bottom = 14.0
-text = "🗝"
-label_settings = SubResource("LabelSettings_amnbx")
-metadata/_edit_use_anchors_ = true
+[node name="Sprite2D" type="Sprite2D" parent="KeyPickup" unique_id=1054783236]
+scale = Vector2(2, 2)
+texture = ExtResource("2_amnbx")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=156371514]
 texture = ExtResource("2_kr1wx")
@@ -51,7 +44,7 @@ shape = SubResource("ConvexPolygonShape2D_md0e3")
 
 [node name="Polygon2D" type="Polygon2D" parent="VisionCone" unique_id=830866604]
 color = Color(1, 0.2, 0.2, 0.25)
-polygon = PackedVector2Array(0, 0, 150, -60, 150, 60)
+polygon = PackedVector2Array(0, 0, 100, -40, 100, 40)
 
 [node name="NavigationAgent2D" type="NavigationAgent2D" parent="." unique_id=790823603]
 path_desired_distance = 16.0

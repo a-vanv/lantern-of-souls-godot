@@ -96,6 +96,10 @@ var _patrol_index:      int     = 0
 ## snap toward the player (through walls) during waypoint transitions
 var _last_approach_dir: Vector2 = Vector2.RIGHT
 
+## Spawn state — captured in _ready() and restored on player death
+var _spawn_position:    Vector2
+var _spawn_rotation:    float
+
 ## NavigationAgent2D must be a child node in the scene editor.
 ## Set its Path Desired Distance to 16 and Target Desired Distance to 16.
 ## Set Path Postprocessing to Corridorfunnel.
@@ -110,6 +114,9 @@ var _vision_poly: Polygon2D
 # ═════════════════════════════════════════════════════
 
 func _ready() -> void:
+	_spawn_position = global_position
+	_spawn_rotation = rotation
+
 	# Cache the vision cone's Polygon2D so we can tint it per-state
 	if has_node("VisionCone/Polygon2D"):
 		_vision_poly = $"VisionCone/Polygon2D"
@@ -342,6 +349,10 @@ func _on_key_body_entered(body: Node2D) -> void:
 func respawn_key() -> void:
 	if has_key:
 		_key_pickup.visible = true
+	global_position = _spawn_position
+	rotation        = _spawn_rotation
+	_patrol_index   = 0
+	_enter_scan()
 
 
 # ═════════════════════════════════════════════════════

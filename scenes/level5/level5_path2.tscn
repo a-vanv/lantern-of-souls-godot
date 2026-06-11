@@ -17,7 +17,6 @@ position = Vector2(148, -341)
 rotation = 1.5707964
 script = ExtResource("1_tubsw")
 patrol_speed = 60.0
-slow_turn_enabled = true
 turn_duration = 1.2
 
 [node name="Enemy" parent="PathFollow2D" unique_id=1810908752 instance=ExtResource("2_88iw6")]

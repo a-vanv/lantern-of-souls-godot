@@ -230,7 +230,9 @@ rotation = -3.1415925
 
 [node name="Hunter" parent="." unique_id=1810908752 instance=ExtResource("4_om1jt")]
 position = Vector2(-1, -945)
-scan_radius = 350.0
+approach_speed = 50.0
+rotation_speed = 1.0
+scan_radius = 200.0
 
 [node name="FinishLine" parent="." unique_id=154216021 instance=ExtResource("5_a1xao")]
 position = Vector2(0, -1054)

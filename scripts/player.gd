@@ -135,11 +135,8 @@ func read_input() -> void:
 
 func _physics_process(delta: float) -> void:
 	read_input()
-	var new_radius: float = lerp(light_shape.radius, _target_radius, radius_lerp_speed * delta) \
-		if abs(_target_radius - light_shape.radius) > scroll_step \
-		else _target_radius
-	light_shape.radius = new_radius
-	light_visual.set_radius(new_radius)
+	light_shape.radius = lerp(light_shape.radius, _target_radius, radius_lerp_speed * delta)
+	light_visual.set_radius(light_shape.radius)
 	move_and_slide()
 	_update_soul(delta)
 
